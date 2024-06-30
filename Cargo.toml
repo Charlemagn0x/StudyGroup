@@ -1,0 +1,12 @@
+[package]
+name = "studygroup"
+version = "0.1.0"
+authors = ["Charlemagn0x"]
+edition = "2018"
+
+[dependencies]
+actix-web = "4.0"
+serde = { version = "1.0", features = ["derive"] }
+diesel = { version = "1.4.7", features = ["postgres", "r2d2"] }
+dotenv = "0.15.0"
+telegram-bot = "0.8.0"
