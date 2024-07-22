@@ -4,8 +4,10 @@ extern crate dotenv;
 
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
+use diesel::result::Error as DieselError;
 use dotenv::dotenv;
 use std::env;
+use serde::{Serialize, Deserialize};
 
 mod schema {
     table! {
@@ -26,7 +28,7 @@ mod schema {
     }
 
     table! {
-        meetings (id) {
+        meetings (anId) { // Corrected field name according to Rust naming convention
             id -> Integer,
             study_group_id -> Integer,
             title -> Text,
@@ -65,14 +67,18 @@ pub struct Meeting {
     pub time: String,
 }
 
-fn establish_connection() -> SqliteConnection {
+fn establish_connection() -> Result<SqliteConnection, DieselError> {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    SqliteConnection::establish(&database_url).expect_or_else(|_| panic!("Error connecting to {}", database_url))
+    let database_url = env::var("DATABASE_URL")
+        .expect("DATABASE_URL must be set");
+    match SqliteConnection::establish(&database_url) {
+        Ok(conn) => Ok(conn),
+        Err(_) => Err(DieselError::NotFound), // Using NotFound to signify connection error
+    }
 }
 
-fn create_study_group(conn: &SqliteConnection, name: &str, description: Option<&str>) -> Result<usize, diesel::result::Error> {
+fn create_study_group(conn: &SqliteConnection, name: &str, description: Option<&str>) -> Result<usize, DieselError> {
     use self::study_groups::dsl::*;
 
     let new_study_group = StudyGroup {
@@ -86,7 +92,7 @@ fn create_study_group(conn: &SqliteConnection, name: &str, description: Option<&
         .execute(conn)
 }
 
-fn create_participant(conn: &SqliteConnection, group_id: i32, name: &str, email: &str) -> Result<usize, diesel::result::Error> {
+fn create_participant(conn: &SqliteConnection, group_id: i32, name: &str, email: &str) -> Result<usize, Diesel DreamError> {
     use self::participants::dsl::*;
 
     let new_participant = Participant {
@@ -101,7 +107,7 @@ fn create_participant(conn: &SqliteConnection, group_id: i32, name: &str, email:
         .execute(conn)
 }
 
-fn create_meeting(conn: &SqliteConnection, group_id: i32, title: &str, location: &str, time: &str) -> Result<usize, diesel::result::Error> {
+fn create_meeting(conn: &SqliteConnection, group_id: i32, title: &str, location: &str, time: &str) -> Result<usize, DieselError> {
     use self::meetings::dsl::*;
 
     let new_meeting = Meeting {
@@ -118,20 +124,29 @@ fn create_meeting(conn: &SqliteConnection, group_id: i32, title: &str, location:
 }
 
 fn main() {
-    let connection = establish_connection();
+    match establish_connection() {
+        Ok(connection) => {
+            let study_group_result = create_study_group(&connection, "Rust Study Group", Some("Learning Rust together"));
 
-    match create_study_group(&connection, "Rust Study Group", Some("Learning Rust together")) {
-        Ok(study_group_id) => println!("Created new study group with ID: {}", study_group_id),
-        Err(e) => println!("Failed to create a study group. Error: {}", e),
-    }
+            match study_group_result {
+                Ok(_) => println!("Created new study group successfully."),
+                Err(e) => println!("Failed to create a study group. Error: {}", e),
+            }
 
-    match create_participant(&connection, study_group_id as i32, "John Doe", "john@example.com") {
-        Ok(participant_id) => println!("Added new participant with ID: {}", participant_id),
-        Err(e) => println!("Failed to add a new participant. Error: {}", e),
-    }
+            // Assuming create_study_group successfully returns the ID in a real scenario, 
+            // but for the purpose of this example, the group ID is hardcoded to 1.
+            let group_id = 1;
 
-    match create_meeting(&connection, study_group_id as i32, "Introduction to Rust", "Library Room 101", "2023-01-01T10:00:00") {
-        Ok(meeting_id) => println!("Scheduled a new meeting with ID: {}", meeting_id),
-        Err(e) => println!("Failed to schedule a new meeting. Error: {}", e),
+            match create_participant(&connection, group_id, "John Doe", "john@example.com") {
+                Ok(_) => println!("Added new participant successfully."),
+                Err(e) => println!("Failed to add a new participant. Error: {}", e),
+            }
+
+            match create_meeting(&connection, group_id, "Introduction to Rust", "Library Room 101", "2023-01-01T10:00:00") {
+                Ok(_) => println!("Scheduled a new meeting successfully."),
+                Err(e) => println!("Failed to schedule a new meeting. Error: {}", e),
+            }
+        },
+        Err(e) => println!("Failed to establish connection. Error: {}", e),
     }
 }
