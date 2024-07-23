@@ -28,7 +28,7 @@ mod schema {
     }
 
     table! {
-        meetings (anId) { // Corrected field name according to Rust naming convention
+        meetings (anId) { // Note: The original identifier corrected as per Rust naming conventions.
             id -> Integer,
             study_group_id -> Integer,
             title -> Text,
@@ -67,36 +67,34 @@ pub struct Meeting {
     pub time: String,
 }
 
+/// Establishes a connection to the SQLite database.
 fn establish_connection() -> Result<SqliteConnection, DieselError> {
     dotenv().ok();
-
-    let database_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
-    match SqliteConnection::establish(&database_url) {
-        Ok(conn) => Ok(conn),
-        Err(_) => Err(DieselError::NotFound), // Using NotFound to signify connection error
-    }
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    SqliteConnection::establish(&database_url).expect("Error connecting to database")
 }
 
+/// Creates a new study group in the database.
 fn create_study_group(conn: &SqliteConnection, name: &str, description: Option<&str>) -> Result<usize, DieselError> {
     use self::study_groups::dsl::*;
 
-    let new_study_group = StudyGroup {
-        id: 0, // Note: Id is auto-incremented, so the actual value here is ignored
+    let new_group = StudyGroup {
+        id: 0, // Note: SQLite auto-increments the ID, this is a placeholder.
         name: name.to_owned(),
         description: description.map(String::from),
     };
 
     diesel::insert_into(study_groups)
-        .values(&new_study_group)
+        .values(&new_group)
         .execute(conn)
 }
 
-fn create_participant(conn: &SqliteConnection, group_id: i32, name: &str, email: &str) -> Result<usize, Diesel DreamError> {
+/// Creates a new participant and associates them with a study group.
+fn create_participant(conn: &SqliteConnection, group_id: i32, name: &str, email: &str) -> Result<usize, DieselError> {
     use self::participants::dsl::*;
 
     let new_participant = Participant {
-        id: 0,
+        id: 0, // Placeholder, SQLite auto-increments.
         study_group_id: group_id,
         name: name.to_owned(),
         email: email.to_owned(),
@@ -107,11 +105,12 @@ fn create_participant(conn: &SqliteConnection, group_id: i32, name: &str, email:
         .execute(conn)
 }
 
+/// Creates a new meeting for a study group.
 fn create_meeting(conn: &SqliteConnection, group_id: i32, title: &str, location: &str, time: &str) -> Result<usize, DieselError> {
     use self::meetings::dsl::*;
 
     let new_meeting = Meeting {
-        id: 0,
+        id: 0, // Placeholder, SQLite auto-increments.
         study_group_id: group_id,
         title: title.to_owned(),
         location: location.to_owned(),
@@ -124,29 +123,28 @@ fn create_meeting(conn: &SqliteConnection, group_id: i32, title: &str, location:
 }
 
 fn main() {
-    match establish_connection() {
-        Ok(connection) => {
-            let study_group_result = create_study_group(&connection, "Rust Study Group", Some("Learning Rust together"));
+    if let Ok(connection) = establish_connection() {
+        if let Ok(_) = create_study_group(&connection, "Rust Study Group", Some("Learning Rust together")) {
+            println!("Created new study group successfully.");
+        } else {
+            println!("Failed to create a study group.");
+        }
 
-            match study_group_result {
-                Ok(_) => println!("Created new study group successfully."),
-                Err(e) => println!("Failed to create a study group. Error: {}", e),
-            }
+        // Assuming successful creation, the following ID is used just as an example.
+        let group_id = 1;
 
-            // Assuming create_study_group successfully returns the ID in a real scenario, 
-            // but for the purpose of this example, the group ID is hardcoded to 1.
-            let group_id = 1;
+        if let Ok(_) = create_participant(&connection, group_id, "John Doe", "john@example.com") {
+            println!("Added new participant successfully.");
+        } else {
+            println!("Failed to add a new participant.");
+        }
 
-            match create_participant(&connection, group_id, "John Doe", "john@example.com") {
-                Ok(_) => println!("Added new participant successfully."),
-                Err(e) => println!("Failed to add a new participant. Error: {}", e),
-            }
-
-            match create_meeting(&connection, group_id, "Introduction to Rust", "Library Room 101", "2023-01-01T10:00:00") {
-                Ok(_) => println!("Scheduled a new meeting successfully."),
-                Err(e) => println!("Failed to schedule a new meeting. Error: {}", e),
-            }
-        },
-        Err(e) => println!("Failed to establish connection. Error: {}", e),
+        if let Ok(_) = create_meeting(&connection, group_id, "Introduction to Rust", "Library Room 101", "2023-01-01T10:00:00") {
+            println!("Scheduled a new meeting successfully.");
+        } else {
+            println!("Failed to schedule a new meeting.");
+        }
+    } else {
+        println!("Failed to establish connection.");
     }
 }
