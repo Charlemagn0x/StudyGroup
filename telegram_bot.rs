@@ -18,25 +18,33 @@ async fn answer(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     match command {
         Command::Help => {
-            cx.answer(Command::descriptions().to_string()).send().await?;
+            if let Err(e) = cx.answer(Command::descriptions().to_string()).send().await {
+                log::error!("Failed to send help message: {:?}", e);
+            }
         }
         Command::NewGroup(group_name) => {
-            // Handle creating a new group (example implementation)
-            cx.answer(format!("New group '{}' created.", group_name))
-                .send()
-                .await?;
+            if let Err(e) = cx.answer(format!("New group '{}' created.", group_name)).send().await {
+                log::error!("Failed to create new group '{}': {:?}", group_name, e);
+            }
         }
         Command::AddParticipant(group_name, participant) => {
-            // Handle adding a participant to a group (example implementation)
-            cx.answer(format!(
-                "Participant '{}' added to group '{}'.",
-                participant, group_name
-            ))
-            .send()
-                .await?;
+            if let Err(e) = cx
+                .answer(format!(
+                    "Participant '{}' added to group '{}'.",
+                    participant, group_name
+                ))
+                .send()
+                .await
+            {
+                log::error!(
+                    "Failed to add participant '{}' to group '{}': {:?}",
+                    participant,
+                    group_name,
+                    e
+                );
+            }
         }
     }
-
     Ok(())
 }
 
@@ -45,7 +53,11 @@ async fn handle_message(
     message: Message,
     command: Command,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    answer(UpdateWithCx { bot, update: message }, command).await
+    if let Err(e) = answer(UpdateWithCx { bot, update: message }, command).await {
+        log::error!("Error handling message: {:?}", e);
+    }
+
+    Ok(())
 }
 
 #[tokio::main]
@@ -57,5 +69,7 @@ async fn main() {
 
     let bot_name: String = env::var("BOT_NAME").expect("BOT_NAME must be set");
 
-    teloxide::commands_repl(bot, bot_name, handle_message).await;
+    if let Err(e) = teloxide::commands_repl(bot, bot_name, handle_message).await {
+        log::error!("Bot encountered an error: {}", e);
+    }
 }
