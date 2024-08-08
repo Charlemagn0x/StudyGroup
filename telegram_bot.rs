@@ -9,7 +9,7 @@ enum Command {
     #[command(description = "create a new study group.")]
     NewGroup(String),
     #[command(description = "add participant to a study group.")]
-    AddParticipant(String, String), // group_name, participant
+    AddParticipant(String, String),
 }
 
 async fn answer(
@@ -33,8 +33,7 @@ async fn answer(
                     "Participant '{}' added to group '{}'.",
                     participant, group_name
                 ))
-                .send()
-                .await
+                .send().await
             {
                 log::error!(
                     "Failed to add participant '{}' to group '{}': {:?}",
