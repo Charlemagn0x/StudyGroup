@@ -1,0 +1,99 @@
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+header {
+  background-color: #007bff;
+  color: #ffffff;
+  padding: 20px;
+  text-align: center;
+}
+
+.study-group-form {
+  background-color: #ffffff;
+  padding: 20px;
+  margin: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+input[type="text"],
+input[type="date"],
+input[type="email"],
+select,
+button {
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+}
+
+button {
+  background-color: #007bff;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.participant-list {
+  margin: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.participant-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.participant-list li {
+  padding: 10px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.meeting-schedule {
+  margin: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.meeting-schedule table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.meeting-schedule th,
+.meeting-schedule td {
+  text-align: left;
+  padding: 8px;
+}
+
+.meeting-schedule th {
+  background-color: #007bff;
+  color: #ffffff;
+}
+
+.meeting-schedule td {
+  border-bottom: 1px solid #eee;
+}
+
+@media screen and (max-width: 768px) {
+  .study-group-form,
+  .participant-list,
+  .meeting-schedule {
+    margin: 20px 10px;
+  }
+}
