@@ -33,6 +33,16 @@ button {
   width: 100%;
   box-sizing: border-box;
   display: block;
+  transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+input[type="text"]:hover,
+input[type="date"]:hover,
+input[type="email"]:hover,
+select:hover,
+button:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 button {
@@ -40,10 +50,7 @@ button {
   color: #ffffff;
   border: none;
   cursor: pointer;
-}
-
-button:hover {
-  background-color: #0056b3;
+  transition: background-color 0.3s ease-in-out;
 }
 
 .participant-list {
@@ -61,6 +68,10 @@ button:hover {
 .participant-list li {
   padding: 10px 20px;
   border-bottom: 1px solid #eee;
+}
+
+.participant-list li:nth-child(odd) {
+  background-color: #f9f9f9;
 }
 
 .meeting-schedule {
@@ -88,6 +99,10 @@ button:hover {
 
 .meeting-schedule td {
   border-bottom: 1px solid #eee;
+}
+
+.meeting-schedule tr:nth-child(even) {
+  background-color: #f2f2f2;
 }
 
 @media screen and (max-width: 768px) {
