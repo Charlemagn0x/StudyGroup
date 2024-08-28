@@ -10,7 +10,7 @@ async function sendRequest(endpoint, method = 'GET', data = null) {
   try {
     const response = await fetch(url, options);
     if (!response.ok) throw new Error('Something went wrong with the request');
-    return await response.json();
+    return response.json();
   } catch (error) {
     console.error('Request Error:', error);
     throw error;
@@ -18,15 +18,19 @@ async function sendRequest(endpoint, method = 'GET', data = null) {
 }
 
 async function createStudyGroup(groupData) {
-  return await sendRequest('study-groups', 'POST', groupData);
+  return sendRequest('study-groups', 'POST', groupData);
 }
 
 async function addParticipants(groupId, participants) {
-  return await sendRequest(`study-groups/${groupId}/participants`, 'POST', { participants });
+  return sendRequest(`study-groups/${groupId}/participants`, 'POST', { participants });
 }
 
 async function scheduleMeeting(groupId, meetingData) {
-  return await sendRequest(`study-groups/${groupId}/meetings`, 'POST', meetingData);
+  return sendRequest(`study-groups/${groupId}/meetings`, 'POST', meetingData);
+}
+
+async function getGroupDetails(groupId) {
+  return sendRequest(`study-groups/${groupId}`);
 }
 
 async function displayStudyGroups() {
@@ -35,7 +39,14 @@ async function displayStudyGroups() {
   groupsContainer.innerHTML = '';
   groups.forEach(group => {
     const groupElement = document.createElement('div');
-    groupElement.textContent = `Group: ${group.name}`;
+    groupElement.textContent = `Group: ${group.name} - Click for details`;
+    groupElement.style.cursor = 'pointer';
+    
+    groupElement.addEventListener('click', async () => {
+      const details = await getGroupDetails(group.id);
+      alert(`Details for ${details.name}: \nParticipants: ${details.participants?.length || 0}`);
+    });
+    
     groupsContainer.appendChild(groupElement);
   });
 }
