@@ -1,5 +1,7 @@
 const API_BASE_URL = process.env.REACT_APP_API_URL;
 
+const groupDetailsCache = new Map();
+
 async function sendRequest(endpoint, method = 'GET', data = null) {
   const url = `${API_BASE_URL}/${endpoint}`;
   const options = { method, headers: {} };
@@ -30,7 +32,13 @@ async function scheduleMeeting(groupId, meetingData) {
 }
 
 async function getGroupDetails(groupId) {
-  return sendRequest(`study-groups/${groupId}`);
+  if (groupDetailsCache.has(groupId)) {
+    return groupDetailsCache.get(groupId);
+  } else {
+    const response = await sendRequest(`study-groups/${groupId}`);
+    groupDetailsCache.set(groupId, response);
+    return response;
+  }
 }
 
 async function displayStudyGroups() {
@@ -56,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const groupName = document.getElementById('group-name').value;
     await createStudyGroup({ name: groupName });
+    groupDetailsCache.clear();
     displayStudyGroups();
   });
 });
