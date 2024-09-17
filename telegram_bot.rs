@@ -12,34 +12,34 @@ enum Command {
     AddParticipant(String, String),
 }
 
-async fn answer(
-    cx: UpdateWithCx<AutoSend<Bot>, Message>,
+async fn send_response(
+    update_context: UpdateWithCx<AutoSend<Bot>, Message>,
     command: Command,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     match command {
         Command::Help => {
-            if let Err(e) = cx.answer(Command::descriptions().to_string()).send().await {
-                log::error!("Failed to send help message: {:?}", e);
+            if let Err(error) = update_context.answer(Command::descriptions().to_string()).send().await {
+                log::error!("Failed to send help message: {:?}", error);
             }
         }
         Command::NewGroup(group_name) => {
-            if let Err(e) = cx.answer(format!("New group '{}' created.", group_name)).send().await {
-                log::error!("Failed to create new group '{}': {:?}", group_name, e);
+            if let Err(error) = update_context.answer(format!("New group '{}' created.", group_name)).send().await {
+                log::error!("Failed to create new group '{}': {:?}", group_name, error);
             }
         }
-        Command::AddParticipant(group_name, participant) => {
-            if let Err(e) = cx
+        Command::AddParticipant(group_name, participant_name) => {
+            if let Err(error) = update_context
                 .answer(format!(
                     "Participant '{}' added to group '{}'.",
-                    participant, group_name
+                    participant_name, group_name
                 ))
                 .send().await
             {
                 log::error!(
                     "Failed to add participant '{}' to group '{}': {:?}",
-                    participant,
+                    participant_name,
                     group_name,
-                    e
+                    error
                 );
             }
         }
@@ -47,13 +47,13 @@ async fn answer(
     Ok(())
 }
 
-async fn handle_message(
-    bot: AutoSend<Bot>,
-    message: Message,
-    command: Command,
+async fn process_message_command(
+    bot_client: AutoSend<Bot>,
+    received_message: Message,
+    parsed_command: Command,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    if let Err(e) = answer(UpdateWithCx { bot, update: message }, command).await {
-        log::error!("Error handling message: {:?}", e);
+    if let Err(error) = send_response(UpdateWithCx { bot: bot_client, update: received_message }, parsed_command).await {
+        log::error!("Error processing message command: {:?}", error);
     }
 
     Ok(())
@@ -62,13 +62,13 @@ async fn handle_message(
 #[tokio::main]
 async fn main() {
     teloxide::enable_logging!();
-    log::info!("Starting bot...");
+    log::info!("Bot is starting...");
 
-    let bot = Bot::from_env().auto_send();
+    let bot_client = Bot::from_env().auto_send();
 
-    let bot_name: String = env::var("BOT_NAME").expect("BOT_NAME must be set");
+    let bot_name: String = env::var("BOT_NAME").expect("Environment variable BOT_NAME must be set");
 
-    if let Err(e) = teloxide::commands_repl(bot, bot_name, handle_message).await {
-        log::error!("Bot encountered an error: {}", e);
+    if let Err(error) = teloxide::commands_repl(bot_client, bot_name, process_message_command).await {
+        log::error!("Bot encountered an error: {}", error);
     }
 }
